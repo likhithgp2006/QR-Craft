@@ -1,0 +1,625 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>QRCraft — Smart QR Generator with Watermarks, Scanner, SVG Export &amp; Batch Generation</title>
+  <meta name="description" content="QRCraft — Generate custom QR codes with live preview. Add watermarks, logos, banners, scan existing QR codes, batch generate, and export in PNG or SVG.">
+  <meta name="keywords" content="QR code generator, WiFi QR code, vCard QR, watermark QR, batch QR generator, SVG QR code">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}?v=7.0">
+</head>
+<body class="theme-nebula">
+  <!-- Interactive Particle Background Canvas -->
+  <canvas id="bgCanvas" class="background-canvas" aria-hidden="true"></canvas>
+
+  <!-- Ambient Cyber Grid Overlay -->
+  <div class="cyber-grid" aria-hidden="true"></div>
+
+  <!-- Ambient Floating Background Typography -->
+  <div class="floating-bg-text-layer" aria-hidden="true">
+    <span class="bg-float-word word-1">QRCRAFT</span>
+    <span class="bg-float-word word-2">WATERMARK</span>
+    <span class="bg-float-word word-3">INSTANT</span>
+    <span class="bg-float-word word-4">SECURE</span>
+    <span class="bg-float-word word-5">DYNAMIC</span>
+    <span class="bg-float-word word-6">LIVE HD</span>
+  </div>
+
+  <!-- Ambient Glowing Orbs -->
+  <div class="ambient-glow glow-1" aria-hidden="true"></div>
+  <div class="ambient-glow glow-2" aria-hidden="true"></div>
+  <div class="ambient-glow glow-3" aria-hidden="true"></div>
+
+  <div class="app-container">
+    <!-- Top Navigation & Atmosphere Theme Switcher -->
+    <header class="top-nav">
+      <div class="brand-badge">
+        <span class="badge-dot"></span>
+        <span class="badge-text">QRCRAFT &bull; INSTANT PREVIEW</span>
+      </div>
+
+      <!-- Website Background Theme Switcher -->
+      <div class="theme-switcher-wrap" role="group" aria-label="Website Background Atmosphere">
+        <span class="theme-switcher-label">Atmosphere:</span>
+        <button type="button" class="theme-pill active" data-theme="theme-nebula" title="Cosmic Nebula Theme">
+          <span class="theme-swatch swatch-nebula"></span> Nebula
+        </button>
+        <button type="button" class="theme-pill" data-theme="theme-matrix" title="Cyber Matrix Theme">
+          <span class="theme-swatch swatch-matrix"></span> Matrix
+        </button>
+        <button type="button" class="theme-pill" data-theme="theme-sunset" title="Sunset Pulse Theme">
+          <span class="theme-swatch swatch-sunset"></span> Sunset
+        </button>
+        <button type="button" class="theme-pill" data-theme="theme-obsidian" title="Obsidian Dark Theme">
+          <span class="theme-swatch swatch-obsidian"></span> Obsidian
+        </button>
+      </div>
+    </header>
+
+    <!-- Hero Header -->
+    <section class="hero-header">
+      <h1 class="brand-title">
+        <span class="brand-gradient-text">QRCraft</span>
+      </h1>
+      <p class="brand-subtitle">Smart QR Code Generator &mdash; Live Watermarks, Scanner &amp; Batch Export</p>
+      <div class="hero-copy">
+        <h2>Create a QR code in seconds.</h2>
+        <p>Instant live preview as you type. Add watermarks, logos, banners, scan existing QR codes, batch generate, and export in PNG or SVG.</p>
+      </div>
+    </section>
+
+    <!-- Error / Notification Banner -->
+    <div id="alertBanner" class="alert-banner" role="alert" aria-live="polite" hidden>
+      <div class="alert-content">
+        <svg class="alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <span id="alertMessage" class="alert-text">Please enter a URL or text.</span>
+      </div>
+      <button type="button" id="alertCloseBtn" class="alert-close" aria-label="Dismiss alert">&times;</button>
+    </div>
+
+    <!-- Tab Navigation -->
+    <nav class="tab-nav" role="tablist" aria-label="Studio Modes">
+      <button type="button" class="tab-btn active" id="tabGenerate" data-tab="generate" role="tab" aria-selected="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h7v7h-7z"/></svg>
+        Generate
+      </button>
+      <button type="button" class="tab-btn" id="tabScan" data-tab="scan" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+        Scanner
+      </button>
+      <button type="button" class="tab-btn" id="tabBatch" data-tab="batch" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+        Batch
+      </button>
+      <button type="button" class="tab-btn" id="tabHistory" data-tab="history" role="tab" aria-selected="false">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+        History
+        <span class="tab-badge" id="historyTabBadge" hidden>0</span>
+      </button>
+    </nav>
+
+    <!-- TAB: GENERATE -->
+    <div id="tabPanelGenerate" class="tab-panel active" role="tabpanel">
+      <!-- Main Studio Grid -->
+      <main class="studio-grid">
+        <!-- Left Column: Input & Customization -->
+        <section class="glass-card input-card glow-card" aria-labelledby="inputSectionTitle">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="step-badge">1</span>
+              <h2 id="inputSectionTitle" class="card-title">Configure QR Code</h2>
+            </div>
+            <span class="tag-pill">Auto-Regenerating</span>
+          </div>
+
+          <form id="qrForm" onsubmit="return false;" novalidate>
+            <!-- URL / Text Input Field -->
+            <div class="form-group">
+              <div class="label-row">
+                <label for="qrInput" class="form-label">URL or Text</label>
+                <span id="charCounter" class="char-counter">20 / 2000</span>
+              </div>
+              <div class="input-wrapper">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path>
+                  <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path>
+                </svg>
+                <input
+                  type="text"
+                  id="qrInput"
+                  name="qrInput"
+                  class="form-control"
+                  value="https://example.com"
+                  placeholder="https://example.com"
+                  maxlength="2000"
+                  autocomplete="off"
+                  required
+                >
+              </div>
+              <p class="field-hint">Changes update the live preview instantly as you type or paste.</p>
+            </div>
+
+            <!-- Quick Examples -->
+            <div class="quick-examples-section">
+              <label class="form-label-secondary">Quick Examples</label>
+              <div class="examples-btn-group" role="group" aria-label="Quick example presets">
+                <button type="button" class="example-chip" data-url="https://google.com">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <path d="m4.93 4.93 4.24 4.24"></path>
+                    <path d="m14.83 9.17 4.24-4.24"></path>
+                    <path d="m14.83 14.83 4.24 4.24"></path>
+                    <path d="m9.17 14.83-4.24 4.24"></path>
+                  </svg>
+                  Google
+                </button>
+                <button type="button" class="example-chip" data-url="https://github.com">
+                  <svg viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/>
+                  </svg>
+                  GitHub
+                </button>
+                <button type="button" class="example-chip" data-url="https://instagram.com">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="20" x="2" y="2" rx="5" ry="5"></rect>
+                    <path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"></path>
+                    <line x1="17.5" x2="17.51" y1="6.5" y2="6.5"></line>
+                  </svg>
+                  Instagram
+                </button>
+                <button type="button" class="example-chip" data-url="https://youtube.com">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.95-1.97C18.88 4 12 4 12 4s-6.88 0-8.59.45A2.78 2.78 0 0 0 1.46 6.42 29 29 0 0 0 1 12a29 29 0 0 0 .46 5.58A2.78 2.78 0 0 0 3.41 19.6C5.12 20 12 20 12 20s6.88 0 8.59-.45a2.78 2.78 0 0 0 1.95-1.95A29 29 0 0 0 23 12a29 29 0 0 0-.46-5.58z"/><polygon points="9.75 15.02 15.5 12 9.75 8.98 9.75 15.02"/></svg>
+                  YouTube
+                </button>
+                <button type="button" class="example-chip" data-url="tel:+1234567890">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.38A2 2 0 0 1 3.59 1h3a2 2 0 0 1 2 1.72c.127.96.361 1.903.7 2.81a2 2 0 0 1-.45 2.11L7.91 8.54a16 16 0 0 0 6.56 6.56l.91-.91a2 2 0 0 1 2.11-.45c.907.339 1.85.573 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                  Phone
+                </button>
+              </div>
+            </div>
+
+            <!-- Color Customization (QR & Background) -->
+            <div class="customization-section">
+              <label class="form-label-secondary">QR Dots &amp; Background Color</label>
+              <div class="color-pickers-grid">
+                <!-- QR Foreground Color -->
+                <div class="color-item">
+                  <label for="fgColorInput" class="color-label">QR Dots Color</label>
+                  <div class="color-picker-box">
+                    <input type="color" id="fgColorInput" class="color-input" value="#111827">
+                    <div class="color-preview-swatch" id="fgSwatch" style="background-color: #111827;"></div>
+                    <input type="text" id="fgHexText" class="hex-text" value="#111827" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+
+                <!-- QR Background Color -->
+                <div class="color-item">
+                  <label for="bgColorInput" class="color-label">Canvas Background</label>
+                  <div class="color-picker-box">
+                    <input type="color" id="bgColorInput" class="color-input" value="#ffffff">
+                    <div class="color-preview-swatch" id="bgSwatch" style="background-color: #ffffff;"></div>
+                    <input type="text" id="bgHexText" class="hex-text" value="#ffffff" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Quick Color Presets -->
+              <div class="presets-row">
+                <span class="presets-caption">Presets:</span>
+                <button type="button" class="preset-pill" data-fg="#111827" data-bg="#ffffff" title="Classic Dark & White">Classic</button>
+                <button type="button" class="preset-pill" data-fg="#4338ca" data-bg="#f5f3ff" title="Indigo Violet">Indigo</button>
+                <button type="button" class="preset-pill" data-fg="#065f46" data-bg="#ecfdf5" title="Emerald Mint">Emerald</button>
+                <button type="button" class="preset-pill" data-fg="#0f172a" data-bg="#f8fafc" title="Slate Titanium">Slate</button>
+                <button type="button" class="preset-pill" data-fg="#7c2d12" data-bg="#fff7ed" title="Ember">Ember</button>
+                <button type="button" class="preset-pill" data-fg="#1e1b4b" data-bg="#eef2ff" title="Royal">Royal</button>
+                <button type="button" class="preset-pill" data-fg="#ffffff" data-bg="#0f172a" title="Inverted Dark">Inverted</button>
+                <button type="button" id="swapColorsBtn" class="preset-pill swap-pill" title="Swap Foreground and Background">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="m7 16 5 5 5-5"></path>
+                    <path d="M12 21V3"></path>
+                  </svg>
+                  Swap
+                </button>
+              </div>
+            </div>
+
+            <!-- Output Size Selector -->
+            <div class="customization-section size-section">
+              <label class="form-label-secondary">Output Resolution</label>
+              <div class="size-options" role="group" aria-label="Output size">
+                <button type="button" class="size-pill" data-size="512">512 px<span class="size-hint">Fast</span></button>
+                <button type="button" class="size-pill active" data-size="1024">1024 px<span class="size-hint">Default</span></button>
+                <button type="button" class="size-pill" data-size="2048">2048 px<span class="size-hint">HD Print</span></button>
+              </div>
+            </div>
+
+            <!-- Feature 1: Visible Watermark (Custom Text & Image) -->
+            <div class="customization-section watermark-custom-section">
+              <div class="section-title-row">
+                <label class="form-label-secondary">Watermark Customization</label>
+                <span class="sub-badge">100% Scannable Matrix</span>
+              </div>
+
+              <!-- Watermark Style Mode -->
+              <div class="presets-row" style="margin-bottom: 0.85rem;">
+                <span class="presets-caption">Style Mode:</span>
+                <button type="button" class="preset-pill wm-style-btn active" data-style="background">Background Watermark</button>
+                <button type="button" class="preset-pill wm-style-btn" data-style="center">Center Emblem</button>
+              </div>
+
+              <!-- Custom Watermark Text Input -->
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label for="watermarkTextInput" class="color-label" style="margin-bottom: 0.35rem; display: block;">
+                  Custom Watermark Text
+                </label>
+                <div class="input-wrapper">
+                  <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 20h9"></path>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                  </svg>
+                  <input
+                    type="text"
+                    id="watermarkTextInput"
+                    class="form-control"
+                    placeholder="Type any custom watermark text (e.g. your name, brand, VIP)..."
+                    maxlength="35"
+                    autocomplete="off"
+                  >
+                </div>
+
+                <!-- Watermark Text Color -->
+                <div style="margin-top: 0.75rem;">
+                  <label for="wmTextColorInput" class="color-label" style="margin-bottom: 0.35rem; display: block;">
+                    Watermark Text Color
+                  </label>
+                  <div class="color-picker-box" style="max-width: 220px;">
+                    <input type="color" id="wmTextColorInput" class="color-input" value="#8b5cf6">
+                    <div class="color-preview-swatch" id="wmTextSwatch" style="background-color: #8b5cf6;"></div>
+                    <input type="text" id="wmTextHex" class="hex-text" value="#8B5CF6" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Custom Watermark Image -->
+              <div class="form-group" style="margin-bottom: 1rem;">
+                <label class="color-label" style="margin-bottom: 0.35rem; display: block;">
+                  Watermark Image / Logo
+                </label>
+                <!-- Preset Watermarks -->
+                <div class="preset-logos-row" role="group" aria-label="Preset watermarks">
+                  <button type="button" class="wm-image-chip active" data-preset="none">None</button>
+                  <button type="button" class="wm-image-chip" data-preset="star">Star</button>
+                  <button type="button" class="wm-image-chip" data-preset="heart">Heart</button>
+                  <button type="button" class="wm-image-chip" data-preset="shield">Shield</button>
+                  <button type="button" class="wm-image-chip" data-preset="crown">Crown</button>
+                </div>
+
+                <!-- Upload Dropzone -->
+                <div class="logo-upload-box" id="logoUploadBox">
+                  <input type="file" id="logoFileInput" accept="image/png,image/jpeg,image/svg+xml,image/webp" hidden>
+                  <div class="upload-dropzone-content" id="uploadPrompt">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                    <span class="upload-text">Upload Any Custom Watermark Image</span>
+                    <span class="upload-subtext">Click to choose image &bull; PNG, JPG, SVG, WebP</span>
+                  </div>
+
+                  <div class="uploaded-logo-preview" id="uploadedLogoPreview" hidden>
+                    <img id="logoThumb" src="" alt="Selected watermark" class="logo-thumb-img">
+                    <div class="logo-info-wrap">
+                      <span id="logoFileName" class="logo-name">custom-image.png</span>
+                      <button type="button" id="removeLogoBtn" class="remove-logo-btn" title="Remove watermark image">&times; Remove Image</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Watermark Opacity Slider -->
+              <div class="opacity-slider-wrap">
+                <div class="label-row" style="margin-bottom: 0.35rem;">
+                  <label for="opacitySlider" class="color-label">Watermark Visibility / Opacity</label>
+                  <span id="opacityValueDisplay" class="char-counter" style="color: var(--accent-primary); font-weight: 600;">50% (High Visibility)</span>
+                </div>
+                <input type="range" id="opacitySlider" min="15" max="80" value="50" step="5" class="range-slider">
+              </div>
+            </div>
+
+            <!-- Feature 2: Bottom Banner Text & Custom Color Picker -->
+            <div class="customization-section bottom-text-section">
+              <label class="form-label-secondary" for="bottomTextInput">Bottom Banner Text &amp; Colors</label>
+              
+              <div class="input-wrapper" style="margin-bottom: 0.75rem;">
+                <svg class="input-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="4 7 4 4 20 4 20 7"></polyline>
+                  <line x1="9" y1="20" x2="15" y2="20"></line>
+                  <line x1="12" y1="4" x2="12" y2="20"></line>
+                </svg>
+                <input
+                  type="text"
+                  id="bottomTextInput"
+                  class="form-control"
+                  placeholder="Type bottom text (e.g. SCAN ME, VISIT US, Contact info)..."
+                  maxlength="35"
+                  autocomplete="off"
+                >
+              </div>
+
+              <!-- Bottom Text Color Pickers -->
+              <div class="color-pickers-grid">
+                <!-- Text Color -->
+                <div class="color-item">
+                  <label for="bottomTextColorInput" class="color-label">Bottom Text Color</label>
+                  <div class="color-picker-box">
+                    <input type="color" id="bottomTextColorInput" class="color-input" value="#ffffff">
+                    <div class="color-preview-swatch" id="bottomTextSwatch" style="background-color: #ffffff;"></div>
+                    <input type="text" id="bottomTextHex" class="hex-text" value="#FFFFFF" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+
+                <!-- Banner Background Color -->
+                <div class="color-item">
+                  <label for="bottomBgColorInput" class="color-label">Banner Background Color</label>
+                  <div class="color-picker-box">
+                    <input type="color" id="bottomBgColorInput" class="color-input" value="#6366f1">
+                    <div class="color-preview-swatch" id="bottomBgSwatch" style="background-color: #6366f1;"></div>
+                    <input type="text" id="bottomBgHex" class="hex-text" value="#6366F1" maxlength="7" spellcheck="false">
+                  </div>
+                </div>
+              </div>
+
+              <!-- Banner Color Themes -->
+              <div class="presets-row" style="margin-top: 0.75rem;">
+                <span class="presets-caption">Banner Themes:</span>
+                <button type="button" class="preset-pill banner-color-preset" data-text="#ffffff" data-bg="#6366f1">Neon Purple</button>
+                <button type="button" class="preset-pill banner-color-preset" data-text="#ffffff" data-bg="#10b981">Emerald</button>
+                <button type="button" class="preset-pill banner-color-preset" data-text="#0f172a" data-bg="#fbbf24">Amber Gold</button>
+                <button type="button" class="preset-pill banner-color-preset" data-text="#ffffff" data-bg="#ef4444">Ruby Red</button>
+                <button type="button" class="preset-pill banner-color-preset" data-text="#ffffff" data-bg="#0f172a">Dark Slate</button>
+                <button type="button" class="preset-pill banner-color-preset" data-text="#ffffff" data-bg="#0ea5e9">Sky Blue</button>
+              </div>
+            </div>
+
+            <!-- Primary Generate Button -->
+            <div class="action-btn-row">
+              <button type="button" id="generateBtn" class="btn btn-primary pulse-btn">
+                <span class="btn-text">Generate QR Code &rarr;</span>
+                <span class="btn-loader" aria-hidden="true" hidden>
+                  <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle>
+                  </svg>
+                  <span>Rendering Live Preview...</span>
+                </span>
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- Right Column: Live QR Preview & Actions -->
+        <section class="glass-card preview-card glow-card" aria-labelledby="previewSectionTitle">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="step-badge">2</span>
+              <h2 id="previewSectionTitle" class="card-title">Live Preview</h2>
+            </div>
+            <span id="previewStatusBadge" class="tag-pill tag-ready">Live Ready</span>
+          </div>
+
+          <div class="preview-stage-container has-qr" id="previewStageContainer">
+            <!-- Active QR Code Preview Display (Always Visible) -->
+            <div id="activePreviewState" class="preview-active-state">
+              <div class="qr-frame-shadow">
+                <div id="qrImageWrapper" class="qr-image-wrapper">
+                  <img id="qrImage" src="" alt="Generated QR Code with Watermark" class="qr-img">
+                </div>
+              </div>
+              <div class="qr-meta-info">
+                <span id="qrSizeIndicator" class="qr-meta-tag">PNG &bull; Watermarked &bull; Live Preview</span>
+                <span id="qrTimestamp" class="qr-meta-time">Ready</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Preview Actions (Download, SVG, Copy Image, Copy Text, Share) -->
+          <div class="preview-actions-footer">
+            <button type="button" id="downloadBtn" class="btn btn-download pulse-on-ready">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" y2="3"></line>
+              </svg>
+              <span>PNG</span>
+            </button>
+            <button type="button" id="downloadSvgBtn" class="btn btn-svg-download">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="M10 12h4"/><path d="M12 10v4"/>
+              </svg>
+              <span>SVG</span>
+            </button>
+            <button type="button" id="copyImageBtn" class="btn btn-secondary" title="Copy QR image to clipboard">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m14.5 4h-5L7 7H4a2 2 0 0 0-2 2v9a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-3z"/>
+                <circle cx="12" cy="13" r="3"/>
+              </svg>
+              <span id="copyImageBtnText">Copy Img</span>
+            </button>
+            <button type="button" id="copyUrlBtn" class="btn btn-secondary" title="Copy Content or Link">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2"></rect>
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"></path>
+              </svg>
+              <span id="copyBtnText">Copy</span>
+            </button>
+            <button type="button" id="shareBtn" class="btn btn-secondary" title="Share QR Code">
+              <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/>
+              </svg>
+              <span id="shareBtnText">Share</span>
+            </button>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <!-- TAB: SCANNER -->
+    <div id="tabPanelScan" class="tab-panel" role="tabpanel" hidden>
+      <div class="studio-grid-single">
+        <section class="glass-card glow-card" aria-labelledby="scanSectionTitle">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="step-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/><path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/><line x1="7" y1="12" x2="17" y2="12"/></svg>
+              </span>
+              <h2 id="scanSectionTitle" class="card-title">QR Code Scanner / Decoder</h2>
+            </div>
+            <span class="tag-pill">Upload & Decode</span>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.5rem;">Upload any QR code image to instantly decode its content. Supports PNG, JPG, WebP, and more.</p>
+
+          <!-- Upload Zone -->
+          <div class="scan-upload-zone" id="scanUploadZone">
+            <input type="file" id="scanFileInput" accept="image/*" hidden>
+            <div id="scanUploadPrompt" class="upload-dropzone-content scan-prompt">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48" style="color: var(--accent-primary); margin-bottom: 0.75rem;">
+                <path d="M3 7V5a2 2 0 0 1 2-2h2"/><path d="M17 3h2a2 2 0 0 1 2 2v2"/>
+                <path d="M21 17v2a2 2 0 0 1-2 2h-2"/><path d="M7 21H5a2 2 0 0 1-2-2v-2"/>
+                <line x1="7" y1="12" x2="17" y2="12"/>
+              </svg>
+              <span class="upload-text">Drop QR image here or click to browse</span>
+              <span class="upload-subtext">PNG, JPG, WebP, GIF &bull; Max 10MB</span>
+            </div>
+            <div id="scanPreviewWrap" class="scan-preview-wrap" hidden>
+              <img id="scanImagePreview" src="" alt="QR to decode" class="scan-preview-img">
+              <button type="button" id="scanResetBtn" class="remove-logo-btn">&times; Remove</button>
+            </div>
+          </div>
+
+          <button type="button" id="decodeBtn" class="btn btn-primary" style="margin-top: 1.25rem; width: 100%;" disabled>
+            <span id="decodeBtnText">Decode QR Code</span>
+            <span id="decodeBtnLoader" hidden>
+              <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+              Decoding...
+            </span>
+          </button>
+
+          <!-- Decode Results -->
+          <div id="decodeResults" class="decode-results" hidden>
+            <div class="decode-results-header">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="18" height="18" style="color: var(--color-success);"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              <span>Decoded Successfully</span>
+            </div>
+            <div id="decodeResultList" class="decode-result-list"></div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB: BATCH GENERATE -->
+    <div id="tabPanelBatch" class="tab-panel" role="tabpanel" hidden>
+      <div class="studio-grid-single">
+        <section class="glass-card glow-card" aria-labelledby="batchSectionTitle">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="step-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              </span>
+              <h2 id="batchSectionTitle" class="card-title">Batch QR Generator</h2>
+            </div>
+            <span class="tag-pill">ZIP Export</span>
+          </div>
+          <p style="color: var(--text-secondary); font-size: 0.88rem; margin-bottom: 1.5rem;">Enter one URL or text per line. All QR codes will be generated and downloaded as a ZIP archive (max 50).</p>
+
+          <div class="form-group">
+            <div class="label-row">
+              <label for="batchInput" class="form-label">URLs / Text (one per line)</label>
+              <span id="batchCounter" class="char-counter">0 / 50 entries</span>
+            </div>
+            <textarea id="batchInput" class="form-control batch-textarea" placeholder="https://example.com&#10;https://google.com&#10;https://github.com&#10;tel:+1234567890" rows="8" maxlength="50000"></textarea>
+          </div>
+
+          <!-- Batch Style Options -->
+          <div class="customization-section" style="margin-bottom: 1.25rem;">
+            <label class="form-label-secondary">Batch QR Style</label>
+            <div class="color-pickers-grid">
+              <div class="color-item">
+                <label for="batchFgColor" class="color-label">QR Dots Color</label>
+                <div class="color-picker-box">
+                  <input type="color" id="batchFgColor" class="color-input" value="#111827">
+                  <div class="color-preview-swatch" id="batchFgSwatch" style="background-color: #111827;"></div>
+                  <input type="text" id="batchFgHex" class="hex-text" value="#111827" maxlength="7">
+                </div>
+              </div>
+              <div class="color-item">
+                <label for="batchBgColor" class="color-label">Canvas Background</label>
+                <div class="color-picker-box">
+                  <input type="color" id="batchBgColor" class="color-input" value="#ffffff">
+                  <div class="color-preview-swatch" id="batchBgSwatch" style="background-color: #ffffff;"></div>
+                  <input type="text" id="batchBgHex" class="hex-text" value="#ffffff" maxlength="7">
+                </div>
+              </div>
+            </div>
+            <div class="presets-row" style="margin-top: 0.75rem;">
+              <span class="presets-caption">Output Size:</span>
+              <button type="button" class="size-pill active batch-size-pill" data-size="512">512 px</button>
+              <button type="button" class="size-pill batch-size-pill" data-size="1024">1024 px</button>
+            </div>
+          </div>
+
+          <button type="button" id="batchGenerateBtn" class="btn btn-primary" style="width: 100%;" disabled>
+            <svg class="btn-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" y2="3"/></svg>
+            <span id="batchBtnText">Generate &amp; Download ZIP</span>
+            <span id="batchBtnLoader" hidden>
+              <svg class="spinner" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" width="18" height="18"><circle cx="12" cy="12" r="10" stroke-dasharray="32" stroke-linecap="round"></circle></svg>
+              Generating...
+            </span>
+          </button>
+        </section>
+      </div>
+    </div>
+
+    <!-- TAB: HISTORY -->
+    <div id="tabPanelHistory" class="tab-panel" role="tabpanel" hidden>
+      <div class="studio-grid-single">
+        <section class="glass-card glow-card" aria-labelledby="historySectionTitle">
+          <div class="card-header">
+            <div class="card-title-wrap">
+              <span class="step-badge">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" width="14" height="14"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              </span>
+              <h2 id="historySectionTitle" class="card-title">Recent QR History</h2>
+            </div>
+            <button type="button" id="clearHistoryBtn" class="preset-pill" style="color: var(--color-error); border-color: rgba(239,68,68,0.3);">Clear All</button>
+          </div>
+
+          <div id="historyGrid" class="history-grid">
+            <!-- Dynamically filled by JS -->
+            <div class="history-empty" id="historyEmpty">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" width="48" height="48" style="color: var(--text-muted); margin-bottom: 0.75rem;">
+                <circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/>
+              </svg>
+              <p>No QR history yet. Generate your first QR code to see it here!</p>
+            </div>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <!-- App Footer -->
+    <footer class="app-footer">
+      <p>QRCraft &mdash; Built with Python Flask &bull; Live Watermarks &bull; SVG Export &bull; Scanner &bull; Batch Generation</p>
+    </footer>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}?v=5.0"></script>
+</body>
+</html>
